@@ -94,28 +94,12 @@ eq_tocean(t+1)..   TOCEAN(t+1)  =E=  TOCEAN(t) + c4 * (TATM(t)-TOCEAN(t))  ;
 eq_forc(t+1)..   FORC(t+1)  =E=  ( (fco22x/t2xco2) * TATM(t) ) # Inversion of the original DICE2016 
                              +   ( (TATM(t+1)-TATM(t))  / c1 ) # TATM( FORC,... ) equation 
                              +   ( c3 *  (TATM(t)-TOCEAN(t)) ) #
-                             +   fcorr   ;                     # Empirical correction factor.
-
+                             +   fcorr                         # Empirical correction factor.
+$if set mod_srm + geoeng_forcing*(wsrm(t) + sum(nn$reg(nn), (SRM(t,nn) - SRM.l(t,nn))))
+;
 
 ##  AFTER SOLVE
 $elseif.ph %phase%=='after_solve'
-
-$set phase 'simulate_1'
-$batinclude 'modules/hub_climate'
-$set phase 'after_solve'
-#............................................................
-# NOTE ALSO: by calling hub_climate you are automatically 
-# selecting the simulate_1 phase of the corresponding climate module.
-#............................................................
-
-
-#=========================================================================
-*   ///////////////////////     SIMULATION    ///////////////////////
-#=========================================================================
-
-##  SIMULATION HALFLOOP 1
-#_________________________________________________________________________
-$elseif.ph %phase%=='simulate_1'
 
 # TEMPERATURE 
 TATM.l(t+1)   =  CCAETOT.l(t+1) * tcre / 1000   
@@ -128,7 +112,9 @@ TOCEAN.l(t+1)  =  TOCEAN.l(t) + c4 * (TATM.l(t)-TOCEAN.l(t)) ;
 FORC.l(t+1)  =  ( (fco22x/t2xco2) * TATM.l(t)   )
              +  ( (TATM.l(t+1)-TATM.l(t))  / c1 )
              +  ( c3 *  (TATM.l(t)-TOCEAN.l(t)) )
-             +  fcorr ;
+             +  fcorr 
+$if set mod_srm +geoeng_forcing*sum(n,SRM.l(t,n))
+             ;
 
 
 #===============================================================================
