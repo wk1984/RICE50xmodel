@@ -16,7 +16,7 @@ $ifthen.ph %phase%=='conf'
 
 * CLIMATE MODULE
 * | DICE2016 | cbsimple | witchco2 | witchoghg |
-$setglobal climate 'witchco2'
+* $setglobal climate 'witchco2'
 $if %policy%==simulation_tatm_exogen $setglobal climate 'tatm_exogen'
 $if %policy%==simulation_climate_regional_exogen $setglobal climate 'tatm_exogen'
 
