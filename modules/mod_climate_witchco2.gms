@@ -173,8 +173,11 @@ $elseif.ph %phase%=='eqs'
 
 # WORLD EMISSIONS --------------------------------------
 * World CO2 emissions (in GTonC)
-eq_w_emi_co2(t)..   W_EMI('co2',t)  =E=  ( (sum(n$reg(n), E(t,n)) + sum(n$(not reg(n)), E.l(t,n)) ) * CO2toC  )
-                                     /   wemi2qemi('co2')  
+eq_w_emi_co2(t)..   W_EMI('co2',t)  =E=  ( (sum(n$reg(n), E(t,n)) + sum(n$(not reg(n)), E.l(t,n)) ) * CO2toC
+$ifthen.perma %permafrost% == 'pf'
+                                      + PF_CO2(t)* CO2toC
+$endif.perma
+                                    )/   wemi2qemi('co2')  
 $if set mod_emission_pulse           + emission_pulse('co2',t)                                     
                                      ; # Carbon
 
@@ -215,7 +218,11 @@ $elseif.ph %phase%=='after_solve'
 #............................................................
 
 * World CO2 emissions (in GTonC!)
-W_EMI.l('co2',t)  =  (sum(n, E.l(t,n))  * CO2toC ) / wemi2qemi('co2') 
+W_EMI.l('co2',t)  =  (sum(n, E.l(t,n))  * CO2toC
+$ifthen.perma %permafrost% == 'pf'
+                                      + PF_CO2.l(t)* CO2toC
+$endif.perma
+) / wemi2qemi('co2') 
 $if set mod_emission_pulse           + emission_pulse('co2',t)   
 ; #Carbon
 
