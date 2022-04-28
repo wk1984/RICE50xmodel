@@ -14,7 +14,7 @@ $setglobal gama 0.300
 
 * SAVINGS RATE
 * | fixed | flexible |
-$setglobal savings 'fixed'
+* $setglobal savings 'fixed'
 
 *SSPs have been updated to 2020 based on Koch and Marian (2021), so no update anymore needed
 *$setglobal update_ssp_by_historical
