@@ -29,7 +29,7 @@ $setglobal baseline 'ssp2'
 
 * POLICY
 * | bau | bau_impact | cba | cbudget | ctax | simulation | simulation_tatm_exogen | simulation_climate_regional_exogen |
-$setglobal policy 'bau_impact'
+$setglobal policy 'bau'
 
 * COOPERATION
 * | coop | noncoop | coalitions
@@ -37,11 +37,15 @@ $setglobal cooperation 'noncoop'
 
 * IMPACT SPECIFICATION
 * | off | witch| dice | burke | dell | kalkuhl | howard |
-$setglobal impact 'burke'
+$setglobal impact 'kalkuhl'
 
 * CLIMATE MODULE
 * | dice2016 | cbsimple | witchco2 | witchoghg |
 $setglobal climate 'witchco2'
+
+* PERMAFROST MODULE
+* |nonpf|pf|
+$setglobal permafrost 'nonpf'
 
 * SAVINGS RATE
 * | fixed | flexible |
@@ -61,8 +65,9 @@ $else
 $setglobal resdir "%workdir%\"
 $if %system.filesys% == UNIX $setglobal resdir "%workdir%/"
 $endif
+$if  NOT exist "%resdir%results"      $call mkdir "%resdir%results"
 ** Results filename
-$setglobal output_filename results_%nameout%
+$setglobal output_filename results_%nameout%_%climate%_%impact%_%permafrost%
 ** DEBUG OPTIONS (only one region is solved)
 *$setglobal debug usa
 *$setglobal all_data_temp #to create an all_data_temp_%nameout%.gdx file after each iteration
@@ -108,11 +113,11 @@ gdp2100=sum(n,YNET.l('18',n));
 display tatm2100,gdp2100,world_damfrac2100,elapsed;
 
 * PRODUCE RESULTS GDX
-execute_unload "%resdir%%output_filename%.gdx"
+execute_unload "%resdir%results/%output_filename%.gdx"
 $batinclude "modules" "gdx_items"
 elapsed
 converged
 solrep
 ;
-$if set fullgdx execute_unload "%resdir%%output_filename%.gdx"
+$if set fullgdx execute_unload "%resdir%results/%output_filename%.gdx"
 
