@@ -65,6 +65,7 @@ $else
 $setglobal resdir "%workdir%\"
 $if %system.filesys% == UNIX $setglobal resdir "%workdir%/"
 $endif
+$if  NOT exist "%resdir%results"      $call mkdir "%resdir%results"
 ** Results filename
 $setglobal output_filename results_%nameout%_%climate%_%impact%_%permafrost%
 ** DEBUG OPTIONS (only one region is solved)
@@ -112,11 +113,11 @@ gdp2100=sum(n,YNET.l('18',n));
 display tatm2100,gdp2100,world_damfrac2100,elapsed;
 
 * PRODUCE RESULTS GDX
-execute_unload "%resdir%%output_filename%.gdx"
+execute_unload "%resdir%results/%output_filename%.gdx"
 $batinclude "modules" "gdx_items"
 elapsed
 converged
 solrep
 ;
-$if set fullgdx execute_unload "%resdir%%output_filename%.gdx"
+$if set fullgdx execute_unload "%resdir%results/%output_filename%.gdx"
 
