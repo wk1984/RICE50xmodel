@@ -115,9 +115,31 @@ $gdxin
 * Configuration settings determine imported scenario
 emi_bau_co2(t,n) = ssp_emi_bau('%baseline%',t,n)  ;
 
+$ifthen.perma %permafrost% == 'pf'
+## PERMAFROST -------------
+PARAMETERS
 
-
-
+    PF_E_Factor 'E-factor to estimate ALT'     /0.045/   
+    PF_a11   'Coef.1 from Global to Land'   /1.3721/
+    PF_a12   'Coef.2 from Global to Land'   /12.1900/
+    PF_a21   'Coef.1 from Land to Permafrost Regions' /1.4330/
+    PF_a22   'Coef.2 from Land to Permafrost Regions' /-26.7821/
+    PF_a31   'Coef.1 from Permafrost Regions to DDT' /89.4972/
+    PF_a32   'Coef.2 from Permafrost Regions to DDT' /1816.7713/
+    PF_a41   'Coef.1 from Permafrost Regions to TSummer' /0.3517/
+    PF_a42   'Coef.2 from Permafrost Regions to TSummer' /10.9067/
+    
+    PF_Carbon 'Gt carbon in upper 3m of permafrost regions' /1068/
+    PF_CH4_Frac  'Fraction of CH4 in permafrost carbon' /0.023/
+    PF_Carbon1 'Gt carbon in upper 1m of permafrost regions' /490.3/
+    PF_Carbon2 'Gt carbon in upper 1-2m of permafrost regions' /365.6/
+    PF_Carbon3 'Gt carbon in upper 2-3m of permafrost regions' /212.1/
+    
+    PF_Static_pool 'Static fraction of total thawed permafrost carbon' /0.40/
+    PF_Q10         'Q10 parameters' /2.5/
+    
+;
+$endif.perma
 
 
 ##  COMPUTE DATA
@@ -165,6 +187,28 @@ POSITIVE VARIABLES  ABATEDEMI, MIU ;
       MIU.l(t,n) = 0 ; 
 ABATEDEMI.l(t,n) = 0 ;
 
+$ifthen.perma %permafrost% == 'pf'
+## PERMAFROST -------------
+Variables
+    PF_C(t)
+    PF_DDT(t)
+    PF_ALT(t)
+    PF_MAAT(t)
+    PF_TSUM(t)
+    PF_CTOT(t)
+    PF_CH4(t)
+    PF_CO2(t)
+    PF_CTOT2(t)
+    PF_CTOT1(t)
+    PF_CTOT3(t)
+;
+
+POSITIVE VARIABLES  PF_DDT ;
+
+PF_ALT.l(tfirst) = 1.5;
+
+$endif.perma
+
 ## EMISSIONS OGHG ----------
 $ifthen.oghg %climate% == 'witchoghg'
 VARIABLES
@@ -197,6 +241,11 @@ CCAETOT.FX(tfirst)  = cumeind0 + cumetree0 ;
 * CO2-budget starts empty
 CCO2EIND.FX(tfirst) = 0 ;
 CCO2ETOT.FX(tfirst) = 0 ;
+
+$ifthen.perma %permafrost% == 'pf'
+## PERMAFROST -------------
+PF_C.fx(tfirst) = 0.9*5;
+$endif.perma
 
 ##  OGHG EMISSION VARIABLES ----------
 $ifthen.oghg %climate% == 'witchoghg'
@@ -249,6 +298,22 @@ $elseif.ph %phase%=='eql'
     eq_abatedemi        # Abated Emissions according to decision'
 #    eq_miuinertiaplus   # Inertia in CO2 Control Rate decreasing'
 #    eq_miuinertiaminus  # Inertia in CO2 Control Rate increasing'
+
+$ifthen.perma %permafrost% == 'pf'
+## Permafrost Emission Equations --------
+    eq_permafrost_carbon # Permafrost emissions'
+    eq_permafrost_tair   # permafrost MAAT'
+    eq_permafrost_ddt    # permafrost DDT'
+    eq_permafrost_alt    # permafrost ALT'
+    eq_permafrost_total_carbon # permafrost total carbon emissions'
+    eq_permafrost_total_carbon1 # permafrost total carbon emissions 1'
+    eq_permafrost_total_carbon2 # permafrost total carbon emissions 2'
+    eq_permafrost_total_carbon3 # permafrost total carbon emissions 3'
+    eq_permafrost_CO2    # permafrost CO2 emissions'
+    eq_permafrost_CH4    # permafrost CH4 emissions'
+    eq_permafrost_tsum   # permafrost summer temperature'
+$endif.perma
+
 ##  OGHG EMISSION EQUATIONS ----------
 $ifthen.oghg %climate% == 'witchoghg'
     eq_eoghg                 #'OGHG emissions equation'
@@ -276,6 +341,9 @@ $elseif.ph %phase%=='eqs'
 
 * Total cumulated emissions in Carbon
  eq_ccaetot(t+1)..   CCAETOT(t+1)  =E=  CCAETOT(t) # All emi (industrial + land) per period in Carbon
+$ifthen.perma %permafrost% == 'pf'
+                                   + PF_CO2(t)* CO2toC
+$endif.perma
                                    +  (( sum(n$reg(n), E(t,n)) + sum(n$(not reg(n)), E.l(t,n)) ) * tstep * CO2toC )  ; #Carbon
 
 * Land Use cumulated emissions in Carbon
@@ -288,11 +356,30 @@ $elseif.ph %phase%=='eqs'
 
 * Total cumulated emissions in CO2
  eq_cco2etot(t+1)..   CCO2ETOT(t+1)   =E=  CCO2ETOT(t) # All emi (industrial + land) per period
+$ifthen.perma %permafrost% == 'pf'
+                                      + PF_CO2(t)
+$endif.perma
                                       +   (( sum(n$reg(n), E(t,n))    + sum(n$(not reg(n)), E.l(t,n)) )    * tstep )  ; #CO2
 
 * Emissions abated
  eq_abatedemi(t,n)$(reg(n))..   ABATEDEMI(t,n)  =E=  MIU(t,n) * sigma(t,n) * YGROSS(t,n)  ;
 
+* ++++++++++++++++++++++
+$ifthen.perma %permafrost% == 'pf'
+ eq_permafrost_carbon(t)$(t.val>1)..   PF_C(t) =e= PF_CTOT(t) - PF_CTOT(t-1);
+ eq_permafrost_tair(t)..     PF_MAAT(t) =e= (PF_a11 *TATM(t) + PF_a12) * PF_a21 + PF_a22;
+ eq_permafrost_ddt(t)..      PF_DDT(t) =e= PF_MAAT(t) * PF_a31 + PF_a32;
+ eq_permafrost_alt(t)..      PF_ALT(t) =e= sqrt(PF_DDT(t)) * PF_E_factor;
+ eq_permafrost_tsum(t)..     PF_TSUM(t) =e= PF_MAAT(t) * PF_a41 + PF_a42;
+ 
+ eq_permafrost_total_carbon1(t)$(PF_ALT.l(t)<=1).. PF_CTOT1(t)=e= (PF_ALT(t) * PF_Carbon1);
+ eq_permafrost_total_carbon2(t)$((PF_ALT.l(t)>1) and (PF_ALT.l(t)<=2)).. PF_CTOT2(t)=e= (PF_Carbon1 + (PF_ALT(t)-1)*PF_Carbon2);
+ eq_permafrost_total_carbon3(t)$((PF_ALT.l(t)>2) and (PF_ALT.l(t)<=3)).. PF_CTOT3(t)=e= (PF_Carbon1 + PF_Carbon2 + (PF_ALT(t)-2)*PF_Carbon3);
+ eq_permafrost_total_carbon(t).. PF_CTOT(t)=e= PF_CTOT1(t)$(PF_ALT.l(t)<=1)+PF_CTOT2(t)$((PF_ALT.l(t)>1) and (PF_ALT.l(t)<=2))+PF_CTOT3(t)$((PF_ALT.l(t)>2) and (PF_ALT.l(t)<=3));
+ 
+ eq_permafrost_CH4(t).. PF_CH4(t) =e= 1.333 *    PF_CH4_Frac * (1 - PF_Static_pool) * PF_C(t) * PF_Q10 ** (PF_TSUM(t)/10);   
+ eq_permafrost_CO2(t).. PF_CO2(t) =e= 3.666 * (1-PF_CH4_Frac)* (1 - PF_Static_pool) * PF_C(t) * PF_Q10 ** (PF_TSUM(t)/10) + PF_CH4(t)*25;
+$endif.perma
 
 ##  EMISSIONS OGHG ----------
 $ifthen.oghg %climate% == 'witchoghg'
@@ -377,6 +464,15 @@ MIU
 ABATEDEMI
 CCO2EIND
 CCO2ETOT
+
+$ifthen.perma %permafrost% == 'pf'
+PF_C
+PF_MAAT
+PF_DDT
+PF_ALT
+PF_CTOT
+PF_CO2
+$endif.perma
 
 # Equations -------------------
 eq_e
