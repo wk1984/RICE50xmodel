@@ -116,7 +116,10 @@ $elseif.ph %phase%=='eql'
 $elseif.ph %phase%=='eqs'
 
 # CARBON CYCLE -----------------------------------------
-eq_mat(t+1)..  MAT(t+1)  =E=  MAT(t)*b11 + MU(t)*b21 
+eq_mat(t+1)..  MAT(t+1)  =E=  MAT(t)*b11 + MU(t)*b21
+$ifthen.perma %permafrost% == 'pf'
+                          + PF_CO2(t)* CO2toC
+$endif.perma
                           +  ((sum(n$reg(n), E(t,n)) + sum(n$(not reg(n)), E.l(t,n))) * tstep * CO2toC )  ;# Carbon
 
 eq_mu(t+1)..   MU(t+1)  =E=  MAT(t)*b12 + MU(t)*b22 + ML(t)*b32 ;
