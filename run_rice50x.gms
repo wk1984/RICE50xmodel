@@ -43,6 +43,10 @@ $setglobal impact 'kalkuhl'
 * | dice2016 | cbsimple | witchco2 | witchoghg |
 $setglobal climate 'witchco2'
 
+* PERMAFROST MODULE
+* |nonpf|pf|
+$setglobal permafrost 'nonpf'
+
 * SAVINGS RATE
 * | fixed | flexible |
 $setglobal savings 'fixed'
@@ -62,7 +66,7 @@ $setglobal resdir "%workdir%\"
 $if %system.filesys% == UNIX $setglobal resdir "%workdir%/"
 $endif
 ** Results filename
-$setglobal output_filename results_%nameout%
+$setglobal output_filename results_%nameout%_%climate%_%impact%_%permafrost%
 ** DEBUG OPTIONS (only one region is solved)
 *$setglobal debug usa
 *$setglobal all_data_temp #to create an all_data_temp_%nameout%.gdx file after each iteration
